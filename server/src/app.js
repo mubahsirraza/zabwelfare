@@ -10,6 +10,7 @@ import driveRoutes from "./routes/driveRoutes.js";
 import healthRoutes from "./routes/healthRoutes.js";
 import notFoundMiddleware from "./middleware/notFoundMiddleware.js";
 import errorMiddleware from "./middleware/errorMiddleware.js";
+import galleryRoutes from "./routes/galleryRoutes.js";
 
 const app = express();
 
@@ -75,10 +76,16 @@ app.use("/api/admin", adminRoutes);
 
 app.use("/api/drives", driveRoutes);
 
+app.use("/api/gallery", galleryRoutes);
+
+
 // Handle unknown routes
 app.use(notFoundMiddleware);
 
 // Centralized error handler (must be last)
 app.use(errorMiddleware);
+
+
+
 
 export default app;

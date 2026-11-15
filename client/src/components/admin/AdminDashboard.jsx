@@ -1,4 +1,6 @@
+
 import AdminDrives from "./AdminDrives.jsx";
+import AdminGallery from "./AdminGallery.jsx";
 import { useState } from "react";
 import {
   LayoutDashboard,
@@ -53,9 +55,11 @@ function StatCard({ title, value, note, icon: Icon }) {
           <Icon size={20} />
         </div>
       </div>
+
       <h3 className="mt-5 text-3xl font-bold tracking-tight text-slate-900">
         {value}
       </h3>
+
       <p className="mt-2 text-xs text-slate-500">{note}</p>
     </div>
   );
@@ -66,6 +70,7 @@ export default function AdminDashboard({ admin, onLogout }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const displayName = admin?.name || "Administrator";
+
   const initials = displayName
     .split(" ")
     .map((part) => part[0])
@@ -99,13 +104,17 @@ export default function AdminDashboard({ admin, onLogout }) {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#38A9E8]">
               <HeartHandshake size={23} />
             </div>
+
             <div>
-              <h1 className="text-lg font-bold tracking-wide">ZABWelfare</h1>
+              <h1 className="text-lg font-bold tracking-wide">
+                ZABWelfare
+              </h1>
               <p className="text-[10px] uppercase tracking-[0.2em] text-slate-400">
                 Admin Portal
               </p>
             </div>
           </div>
+
           <button
             type="button"
             onClick={() => setSidebarOpen(false)}
@@ -161,12 +170,16 @@ export default function AdminDashboard({ admin, onLogout }) {
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#38A9E8] text-sm font-bold">
               {initials}
             </div>
+
             <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-semibold">{displayName}</p>
+              <p className="truncate text-sm font-semibold">
+                {displayName}
+              </p>
               <p className="truncate text-xs capitalize text-slate-400">
                 {admin?.role?.replace("_", " ") || "Administrator"}
               </p>
             </div>
+
             <button
               type="button"
               onClick={onLogout}
@@ -189,6 +202,7 @@ export default function AdminDashboard({ admin, onLogout }) {
             >
               <Menu size={22} />
             </button>
+
             <div>
               <h2 className="text-lg font-bold text-slate-900">
                 {activePage}
@@ -208,6 +222,7 @@ export default function AdminDashboard({ admin, onLogout }) {
                 className="w-32 bg-transparent text-sm outline-none placeholder:text-slate-400"
               />
             </div>
+
             <button
               type="button"
               aria-label="Notifications"
@@ -216,6 +231,7 @@ export default function AdminDashboard({ admin, onLogout }) {
               <Bell size={18} />
               <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-[#E63946]" />
             </button>
+
             <div className="hidden h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-sm font-bold text-sky-800 sm:flex">
               {initials}
             </div>
@@ -227,14 +243,19 @@ export default function AdminDashboard({ admin, onLogout }) {
             <>
               <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
                 <div>
-                  <p className="text-sm text-slate-500">Welcome back,</p>
+                  <p className="text-sm text-slate-500">
+                    Welcome back,
+                  </p>
+
                   <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
                     {displayName}
                   </h1>
+
                   <p className="mt-2 text-sm text-slate-500">
                     Manage your welfare activities and website content.
                   </p>
                 </div>
+
                 <button
                   type="button"
                   onClick={() => handleNavigation("Drives")}
@@ -252,18 +273,21 @@ export default function AdminDashboard({ admin, onLogout }) {
                   note="Drive records will appear here"
                   icon={HeartHandshake}
                 />
+
                 <StatCard
                   title="Gallery Images"
                   value="—"
                   note="Uploaded images will appear here"
                   icon={Images}
                 />
+
                 <StatCard
                   title="Team Members"
                   value="—"
                   note="Published team members"
                   icon={Users}
                 />
+
                 <StatCard
                   title="Donations"
                   value="—"
@@ -279,30 +303,36 @@ export default function AdminDashboard({ admin, onLogout }) {
                       <h3 className="font-bold text-slate-900">
                         Recent Activity
                       </h3>
+
                       <p className="mt-1 text-xs text-slate-500">
                         Updates from your administration workspace
                       </p>
                     </div>
+
                     <Activity size={20} className="text-sky-600" />
                   </div>
 
                   <div className="mt-6 space-y-5">
                     {activities.map((item, index) => {
                       const Icon = item.icon;
+
                       return (
                         <div key={index} className="flex gap-4">
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
                             <Icon size={19} />
                           </div>
+
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap justify-between gap-2">
                               <p className="text-sm font-semibold text-slate-800">
                                 {item.title}
                               </p>
+
                               <span className="text-xs text-slate-400">
                                 {item.time}
                               </span>
                             </div>
+
                             <p className="mt-1 text-sm text-slate-500">
                               {item.description}
                             </p>
@@ -317,13 +347,16 @@ export default function AdminDashboard({ admin, onLogout }) {
                   <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-white/15">
                     <CalendarDays size={22} />
                   </div>
+
                   <h3 className="mt-5 text-xl font-bold">
                     Keep your website updated
                   </h3>
+
                   <p className="mt-2 text-sm leading-6 text-white/80">
                     Publish welfare drives, share recent activities, and keep
                     your community informed.
                   </p>
+
                   <button
                     type="button"
                     onClick={() => handleNavigation("Drives")}
@@ -335,8 +368,10 @@ export default function AdminDashboard({ admin, onLogout }) {
                 </section>
               </div>
             </>
-                 ) : activePage === "Drives" ? (
+          ) : activePage === "Drives" ? (
             <AdminDrives />
+          ) : activePage === "Gallery" ? (
+            <AdminGallery />
           ) : (
             <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
@@ -344,17 +379,22 @@ export default function AdminDashboard({ admin, onLogout }) {
                   const item = navigation.find(
                     (entry) => entry.label === activePage
                   );
+
                   const Icon = item?.icon || Settings;
+
                   return <Icon size={23} />;
                 })()}
               </div>
+
               <h1 className="mt-5 text-2xl font-bold text-slate-900">
                 {activePage}
               </h1>
+
               <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
                 This section is ready for development. We'll connect it to the
                 backend and build its management features in the next steps.
               </p>
+
               <button
                 type="button"
                 onClick={() => setActivePage("Overview")}
