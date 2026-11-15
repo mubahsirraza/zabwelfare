@@ -3,6 +3,9 @@ import cors from "cors";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
 import cookieParser from "cookie-parser";
+import adminRoutes from "./routes/adminRoutes.js";
+import adminAuthRoutes from "./routes/adminAuthRoutes.js";
+import driveRoutes from "./routes/driveRoutes.js";
 
 import healthRoutes from "./routes/healthRoutes.js";
 import notFoundMiddleware from "./middleware/notFoundMiddleware.js";
@@ -63,6 +66,14 @@ app.get("/", (req, res) => {
 
 // API routes
 app.use("/api/health", healthRoutes);
+
+// Admin authentication routes
+app.use("/api/admin/auth", adminAuthRoutes);
+
+// Other admin routes
+app.use("/api/admin", adminRoutes);
+
+app.use("/api/drives", driveRoutes);
 
 // Handle unknown routes
 app.use(notFoundMiddleware);
