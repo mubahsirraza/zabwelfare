@@ -2694,8 +2694,64 @@ function NewsDetailPage() {
 // 29. DONATION PAGE
 // ======================================================
 
+
 function DonatePage() {
   usePageAnimations();
+
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [proof, setProof] = useState(null);
+
+  const handleDonationSubmit = async (e) => {
+    e.preventDefault();
+
+    setSubmitting(true);
+    setError("");
+    setSuccess(false);
+
+    try {
+      const form = e.currentTarget;
+      const formData = new FormData(form);
+
+      formData.append("paymentMethod", "NayaPay");
+
+      if (proof) {
+        formData.append("paymentProof", proof);
+      }
+
+      const API_URL =
+        import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+      const response = await fetch(`${API_URL}/donations`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to submit your donation."
+        );
+      }
+
+      setSuccess(true);
+      setProof(null);
+      form.reset();
+
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
+    } catch (err) {
+      setError(
+        err.message || "Something went wrong. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <>
@@ -2712,56 +2768,301 @@ function DonatePage() {
             centered
             eyebrow="Make a contribution"
             title="Choose how you would like to help."
-            description="We are preparing verified donation channels for supporters."
+            description="Your support helps us create meaningful change in our community."
           />
 
+          {/* Payment methods */}
           <div className="mt-14 grid gap-6 md:grid-cols-3">
-            {[
-              {
-                title: "Bank Transfer",
-                description:
-                  "Bank account information will be published after verification.",
-                icon: BriefcaseBusiness,
-              },
-              {
-                title: "JazzCash",
-                description:
-                  "Mobile payment instructions will be added after merchant verification.",
-                icon: Phone,
-              },
-              {
-                title: "Easypaisa",
-                description:
-                  "Mobile payment instructions will be added after merchant verification.",
-                icon: Gift,
-              },
-            ].map((method) => {
-              const Icon = method.icon;
 
-              return (
-                <div
-                  key={method.title}
-                  className="reveal rounded-3xl border border-slate-100 bg-white p-8 shadow-sm"
-                >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
-                    <Icon size={27} />
-                  </div>
+            {/* NayaPay */}
+            <div className="reveal rounded-3xl border-2 border-sky-200 bg-sky-50/50 p-8 shadow-sm">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                <Gift size={27} />
+              </div>
 
-                  <h3 className="mt-7 text-xl font-extrabold text-slate-950">
-                    {method.title}
-                  </h3>
+              <div className="mt-7 flex items-center justify-between gap-2">
+                <h3 className="text-xl font-extrabold text-slate-950">
+                  NayaPay
+                </h3>
+                <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
+                  Available
+                </span>
+              </div>
 
-                  <p className="mt-3 text-sm leading-7 text-slate-500">
-                    {method.description}
+              <p className="mt-3 text-sm leading-7 text-slate-500">
+                Send your contribution directly using the following
+                NayaPay account.
+              </p>
+
+              <div className="mt-5 space-y-3 rounded-2xl bg-white p-4">
+                <div>
+                  <p className="text-xs text-slate-400">Account Name</p>
+                  <p className="mt-1 font-bold text-slate-900">
+                    Mubashir Raza
                   </p>
                 </div>
-              );
-            })}
+
+                <div>
+                  <p className="text-xs text-slate-400">Account Number</p>
+                  <p className="mt-1 text-lg font-extrabold tracking-wide text-sky-700">
+                    03093558184
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigator.clipboard.writeText("03093558184")
+                  }
+                  className="w-full rounded-xl border border-sky-100 py-2 text-sm font-semibold text-sky-700 transition hover:bg-sky-50"
+                >
+                  Copy Account Number
+                </button>
+              </div>
+            </div>
+
+            {/* JazzCash */}
+            <div className="reveal rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
+                <Phone size={27} />
+              </div>
+
+              <div className="mt-7 flex items-center justify-between gap-2">
+                <h3 className="text-xl font-extrabold text-slate-950">
+                  JazzCash
+                </h3>
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+                  Coming Soon
+                </span>
+              </div>
+
+              <p className="mt-3 text-sm leading-7 text-slate-500">
+                JazzCash payment instructions will be published
+                after account verification.
+              </p>
+            </div>
+
+            {/* Bank Transfer */}
+            <div className="reveal rounded-3xl border border-slate-100 bg-white p-8 shadow-sm">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
+                <BriefcaseBusiness size={27} />
+              </div>
+
+              <div className="mt-7 flex items-center justify-between gap-2">
+                <h3 className="text-xl font-extrabold text-slate-950">
+                  Bank Transfer
+                </h3>
+                <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-700">
+                  Coming Soon
+                </span>
+              </div>
+
+              <p className="mt-3 text-sm leading-7 text-slate-500">
+                Official bank account information will be added
+                after verification.
+              </p>
+            </div>
           </div>
 
+          {/* Donation form */}
+          <div
+            id="donation-form"
+            className="mx-auto mt-20 max-w-3xl rounded-3xl border border-slate-100 bg-white p-6 shadow-lg shadow-slate-100 md:p-10"
+          >
+            <div className="mb-8">
+              <span className="text-sm font-bold uppercase tracking-wider text-sky-700">
+                Make your contribution
+              </span>
+
+              <h2 className="mt-3 text-3xl font-extrabold text-slate-950">
+                Submit your donation
+              </h2>
+
+              <p className="mt-3 text-sm leading-7 text-slate-500">
+                First transfer your contribution to our NayaPay
+                account. Then complete this form with your payment
+                information.
+              </p>
+            </div>
+
+            {success && (
+              <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 p-5">
+                <h3 className="font-bold text-green-800">
+                  Thank you for your generosity!
+                </h3>
+                <p className="mt-2 text-sm leading-6 text-green-700">
+                  Your donation submission has been received.
+                  It will remain pending until our team verifies
+                  your payment.
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                {error}
+              </div>
+            )}
+
+            <form
+              onSubmit={handleDonationSubmit}
+              className="space-y-6"
+            >
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    name="donorName"
+                    required
+                    maxLength={120}
+                    placeholder="Enter your name"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Phone Number *
+                  </label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    required
+                    placeholder="03XXXXXXXXX"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  placeholder="your@email.com"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                />
+              </div>
+
+              <div className="grid gap-5 sm:grid-cols-2">
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Donation Amount (PKR) *
+                  </label>
+                  <input
+                    type="number"
+                    name="amount"
+                    required
+                    min="1"
+                    step="1"
+                    placeholder="Enter amount"
+                    className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-semibold text-slate-700">
+                    Payment Method
+                  </label>
+                  <input
+                    type="text"
+                    value="NayaPay"
+                    readOnly
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-700 outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Transaction Reference
+                </label>
+                <input
+                  type="text"
+                  name="transactionReference"
+                  maxLength={150}
+                  placeholder="Enter your transaction ID or reference"
+                  className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Payment Proof (Optional)
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) =>
+                    setProof(e.target.files?.[0] || null)
+                  }
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600 file:mr-4 file:rounded-lg file:border-0 file:bg-sky-50 file:px-4 file:py-2 file:font-semibold file:text-sky-700"
+                />
+                <p className="mt-2 text-xs text-slate-400">
+                  Upload a screenshot or image of your payment receipt.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-slate-700">
+                  Message (Optional)
+                </label>
+                <textarea
+                  name="message"
+                  rows={4}
+                  maxLength={1000}
+                  placeholder="Leave a message or tell us what inspired your contribution..."
+                  className="w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                />
+              </div>
+
+              <label className="flex cursor-pointer items-start gap-3 rounded-xl bg-slate-50 p-4">
+                <input
+                  type="checkbox"
+                  name="isAnonymous"
+                  value="true"
+                  className="mt-1 h-4 w-4 accent-sky-600"
+                />
+                <span>
+                  <span className="block text-sm font-semibold text-slate-800">
+                    Make my donation anonymous
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-slate-500">
+                    Your name will not be displayed publicly.
+                  </span>
+                </span>
+              </label>
+
+              <button
+                type="submit"
+                disabled={submitting}
+                className="w-full rounded-xl bg-sky-600 px-6 py-4 text-sm font-bold text-white shadow-lg shadow-sky-100 transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {submitting
+                  ? "Submitting Donation..."
+                  : "Submit Donation"}
+              </button>
+
+              <p className="text-center text-xs leading-6 text-slate-400">
+                Your submission is not an automatic payment
+                confirmation. All contributions are manually
+                reviewed and verified by our team.
+              </p>
+            </form>
+          </div>
+
+          {/* Safety notice */}
           <div className="mt-12 rounded-3xl border border-amber-200 bg-amber-50 p-7">
             <div className="flex items-start gap-4">
-              <ShieldCheck className="mt-1 shrink-0 text-amber-700" size={25} />
+              <ShieldCheck
+                className="mt-1 shrink-0 text-amber-700"
+                size={25}
+              />
 
               <div>
                 <h3 className="font-extrabold text-slate-900">
@@ -2769,9 +3070,11 @@ function DonatePage() {
                 </h3>
 
                 <p className="mt-2 text-sm leading-7 text-slate-600">
-                  Please use only donation instructions published through
-                  verified official ZABWelfare channels. We will not display
-                  unverified account or payment details.
+                  Please use only the payment instructions published
+                  through verified official ZABWelfare channels.
+                  Never share your PIN, password, or OTP with anyone.
+                  Donations are marked verified only after payment
+                  confirmation by our team.
                 </p>
               </div>
             </div>
@@ -2783,6 +3086,7 @@ function DonatePage() {
     </>
   );
 }
+
 
 // ======================================================
 // 30. VOLUNTEER PAGE

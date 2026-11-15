@@ -3,6 +3,7 @@ import AdminDrives from "./AdminDrives.jsx";
 import AdminTeam from "./AdminTeam.jsx";
 import AdminGallery from "./AdminGallery.jsx";
 import AdminNews from "./AdminNews.jsx";
+import AdminDonations from "./AdminDonations.jsx";
 import { useState } from "react";
 import {
   LayoutDashboard,
@@ -378,6 +379,8 @@ export default function AdminDashboard({ admin, onLogout }) {
             <AdminTeam />
           ) : activePage === "News & Updates" ? (
             <AdminNews />
+            ) : activePage === "Donations" ? (
+  <AdminDonations />
           ) : (
             <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
