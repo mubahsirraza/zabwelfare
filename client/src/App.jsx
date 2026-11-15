@@ -100,6 +100,36 @@ gsap.registerPlugin(ScrollTrigger);
 
 const SITE_NAME = "ZABWelfare";
 
+const API_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+function formatDrive(drive) {
+  const categoryIcons = {
+    Education: GraduationCap,
+    Food: Gift,
+    Healthcare: Heart,
+    Fundraising: HeartHandshake,
+    Environment: Lightbulb,
+    fullDescription: drive.description,
+    "Community Support": HandHeart,
+  };
+
+  return {
+    ...drive,
+    id: drive._id,
+    image: drive.coverImage?.url || IMAGES.community,
+    description: drive.shortDescription || drive.description,
+    date: drive.driveDate
+      ? new Date(drive.driveDate).toLocaleDateString("en-PK", {
+          day: "numeric",
+          month: "short",
+          year: "numeric",
+        })
+      : "Community initiative",
+    icon: categoryIcons[drive.category] || HeartHandshake,
+  };
+}
+
 const INSTAGRAM_URL =
   "https://www.instagram.com/zabwelfare_official/";
 
@@ -1024,8 +1054,10 @@ function ValuesSection() {
 // 11. DRIVES AND INITIATIVES
 // ======================================================
 
-function DriveCard({ drive }) {
-  const Icon = drive.icon;
+
+ 
+        function DriveCard({ drive }) {
+  const Icon = drive.icon || HeartHandshake;
 
   return (
     <motion.article
@@ -1068,10 +1100,7 @@ function DriveCard({ drive }) {
 
           <div className="mt-6 flex items-center gap-2 text-sm font-extrabold text-red-500">
             Explore initiative
-            <ArrowRight
-              size={16}
-              className="transition-transform group-hover:translate-x-1"
-            />
+            <ArrowRight size={16} />
           </div>
         </div>
       </Link>
@@ -1080,6 +1109,23 @@ function DriveCard({ drive }) {
 }
 
 function FeaturedDrives() {
+  const [drives, setDrives] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_URL}/drives`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Could not load drives");
+        return res.json();
+      })
+      .then((data) => {
+        const published = (data.drives || []).map(formatDrive);
+        setDrives(published.filter((drive) => drive.featured).slice(0, 3));
+      })
+      .catch((error) => console.error("Featured drives:", error))
+      .finally(() => setLoading(false));
+  }, []);
+
   return (
     <section className="bg-white py-24">
       <div className="mx-auto max-w-[1440px] px-5 md:px-8 lg:px-12">
@@ -1096,15 +1142,22 @@ function FeaturedDrives() {
         </div>
 
         <div className="mt-12 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
-          {drives.slice(0, 3).map((drive) => (
-            <DriveCard key={drive.id} drive={drive} />
-          ))}
+          {loading ? (
+            <p className="text-slate-500">Loading initiatives...</p>
+          ) : drives.length > 0 ? (
+            drives.map((drive) => (
+              <DriveCard key={drive.id} drive={drive} />
+            ))
+          ) : (
+            <p className="text-slate-500">
+              New initiatives will be featured here soon.
+            </p>
+          )}
         </div>
       </div>
     </section>
   );
 }
-
 // ======================================================
 // 12. CAUSES SECTION
 // ======================================================
@@ -1671,7 +1724,24 @@ function CausesPage() {
 
 function DrivesPage() {
   const [filter, setFilter] = useState("All");
+  const [drives, setDrives] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
   usePageAnimations([filter]);
+
+  useEffect(() => {
+    fetch(`${API_URL}/drives`)
+      .then((res) => {
+        if (!res.ok) throw new Error("Unable to load drives.");
+        return res.json();
+      })
+      .then((data) => {
+        setDrives((data.drives || []).map(formatDrive));
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   const categories = [
     "All",
@@ -1701,35 +1771,59 @@ function DrivesPage() {
               description="Browse the different areas of our community work."
             />
 
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => setFilter(category)}
-                  className={`rounded-full px-5 py-3 text-xs font-bold transition ${
-                    filter === category
-                      ? "bg-sky-600 text-white"
-                      : "border border-slate-200 bg-white text-slate-600 hover:border-sky-400 hover:text-sky-700"
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
+            {!loading && drives.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {categories.map((category) => (
+                  <button
+                    key={category}
+                    type="button"
+                    onClick={() => setFilter(category)}
+                    className={`rounded-full px-5 py-3 text-xs font-bold transition ${
+                      filter === category
+                        ? "bg-sky-600 text-white"
+                        : "border border-slate-200 bg-white text-slate-600 hover:border-sky-400 hover:text-sky-700"
+                    }`}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="mt-12 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
-            {filteredDrives.map((drive) => (
-              <DriveCard key={drive.id} drive={drive} />
-            ))}
+          <div className="mt-12">
+            {loading ? (
+              <p className="text-center text-slate-500">
+                Loading our initiatives...
+              </p>
+            ) : error ? (
+              <p className="text-center text-red-500">{error}</p>
+            ) : filteredDrives.length > 0 ? (
+              <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
+                {filteredDrives.map((drive) => (
+                  <DriveCard key={drive.id} drive={drive} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-3xl bg-white p-12 text-center">
+                <HeartHandshake
+                  size={42}
+                  className="mx-auto text-sky-600"
+                />
+                <h3 className="mt-5 text-xl font-extrabold text-slate-900">
+                  No initiatives available yet
+                </h3>
+                <p className="mt-3 text-slate-500">
+                  Please check back soon for our latest activities.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
     </>
   );
 }
-
 // ======================================================
 // 23. DRIVE DETAIL PAGE
 // ======================================================
@@ -1737,11 +1831,40 @@ function DrivesPage() {
 function DriveDetailPage() {
   const { slug } = useParams();
 
-  const drive = drives.find((item) => item.slug === slug);
+  const [drive, setDrive] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   usePageAnimations([slug]);
 
-  if (!drive) {
+  useEffect(() => {
+    setLoading(true);
+    setDrive(null);
+    setError("");
+
+    fetch(`${API_URL}/drives/${slug}`)
+      .then((res) => {
+        if (res.status === 404) throw new Error("Drive not found.");
+        if (!res.ok) throw new Error("Unable to load this initiative.");
+        return res.json();
+      })
+      .then((data) => {
+        if (!data.drive) throw new Error("Drive not found.");
+        setDrive(formatDrive(data.drive));
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <div className="flex min-h-[60vh] items-center justify-center">
+        <p className="text-slate-500">Loading initiative...</p>
+      </div>
+    );
+  }
+
+  if (error || !drive) {
     return <NotFoundPage />;
   }
 
@@ -1767,17 +1890,27 @@ function DriveDetailPage() {
               About this initiative
             </h2>
 
-            <p className="mt-5 leading-8 text-slate-500">
-              This initiative represents the kind of community-focused work
-              that ZABWelfare aims to encourage. Our goal is to bring
-              volunteers and supporters together around meaningful causes.
+            <p className="mt-5 leading-8 text-slate-500 whitespace-pre-line">
+              {drive.fullDescription || drive.description}
             </p>
 
-            <p className="mt-5 leading-8 text-slate-500">
-              Detailed activity descriptions, dates, photographs and results
-              will be published here as verified information becomes
-              available.
-            </p>
+            <div className="mt-8 rounded-2xl bg-sky-50 p-6">
+              <p className="text-sm font-bold text-sky-800">
+                Initiative date
+              </p>
+              <p className="mt-2 text-slate-600">{drive.date}</p>
+
+              {drive.location && (
+                <>
+                  <p className="mt-5 text-sm font-bold text-sky-800">
+                    Location
+                  </p>
+                  <p className="mt-2 text-slate-600">
+                    {drive.location}
+                  </p>
+                </>
+              )}
+            </div>
           </div>
 
           <aside className="reveal-right h-fit rounded-3xl bg-sky-50 p-8">
@@ -1805,7 +1938,6 @@ function DriveDetailPage() {
     </>
   );
 }
-
 // ======================================================
 // 24. PRESIDENT'S VISION PAGE
 // ======================================================
