@@ -1,4 +1,4 @@
-
+import AdminDrives from "./AdminDrives.jsx";
 import { useState } from "react";
 import {
   LayoutDashboard,
@@ -335,6 +335,8 @@ export default function AdminDashboard({ admin, onLogout }) {
                 </section>
               </div>
             </>
+                 ) : activePage === "Drives" ? (
+            <AdminDrives />
           ) : (
             <section className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
