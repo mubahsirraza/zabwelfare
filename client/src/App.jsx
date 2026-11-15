@@ -261,28 +261,7 @@ const causes = [
 ];
 
 
-const teamMembers = [
-  {
-    name: "President",
-    role: "President",
-    image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=85",
-  },
-  {
-    name: "Vice President",
-    role: "Vice President",
-    image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=85",
-  },
-  {
-    name: "General Secretary",
-    role: "General Secretary",
-    image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=600&q=85",
-  },
-  {
-    name: "Finance Secretary",
-    role: "Finance Secretary",
-    image: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?auto=format&fit=crop&w=600&q=85",
-  },
-];
+
 
 // ======================================================
 // 3. COMMON ANIMATION HOOK
@@ -1326,7 +1305,33 @@ function VolunteerCTA() {
 // 15. GALLERY PREVIEW
 // ======================================================
 
+
 function GalleryPreview() {
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchGalleryImages = async () => {
+      try {
+        const response = await fetch(`${API_URL}/gallery`);
+
+        if (!response.ok) {
+          throw new Error("Failed to load gallery images");
+        }
+
+        const data = await response.json();
+        setGalleryImages(data.images || []);
+      } catch (error) {
+        console.error("Gallery preview error:", error);
+        setGalleryImages([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGalleryImages();
+  }, []);
+
   return (
     <section className="bg-[#F5FAFE] py-24">
       <div className="mx-auto max-w-[1440px] px-5 md:px-8 lg:px-12">
@@ -1342,37 +1347,48 @@ function GalleryPreview() {
           </SecondaryButton>
         </div>
 
-        <div className="mt-12 grid auto-rows-[210px] grid-cols-2 gap-4 md:grid-cols-4">
-          {galleryImages.slice(0, 6).map((item, index) => (
-            <Link
-              to="/gallery"
-              key={item.title}
-              className={`reveal group relative overflow-hidden rounded-2xl ${
-                index === 0 || index === 5
-                  ? "col-span-2 row-span-2"
-                  : ""
-              }`}
-            >
-              <img
-                src={item.image}
-                alt={item.title}
-                className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-              />
+        {loading ? (
+          <div className="mt-12 py-16 text-center text-slate-500">
+            Loading gallery...
+          </div>
+        ) : galleryImages.length > 0 ? (
+          <div className="mt-12 grid auto-rows-[210px] grid-cols-2 gap-4 md:grid-cols-4">
+            {galleryImages.slice(0, 6).map((item, index) => (
+              <Link
+                to="/gallery"
+                key={item._id || index}
+                className={`reveal group relative overflow-hidden rounded-2xl ${
+                  index === 0 || index === 5
+                    ? "col-span-2 row-span-2"
+                    : ""
+                }`}
+              >
+                <img
+                  src={item.image?.url}
+                  alt={item.title || "ZABWelfare gallery"}
+                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                  loading="lazy"
+                />
 
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent opacity-80 transition group-hover:opacity-100" />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/75 via-transparent to-transparent opacity-80 transition group-hover:opacity-100" />
 
-              <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
-                <h3 className="text-sm font-extrabold text-white md:text-base">
-                  {item.title}
-                </h3>
+                <div className="absolute bottom-5 left-5 right-5 flex items-end justify-between">
+                  <h3 className="text-sm font-extrabold text-white md:text-base">
+                    {item.title}
+                  </h3>
 
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-900 transition group-hover:bg-red-500 group-hover:text-white">
-                  <ArrowUpRight size={17} />
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-900 transition group-hover:bg-red-500 group-hover:text-white">
+                    <ArrowUpRight size={17} />
+                  </div>
                 </div>
-              </div>
-            </Link>
-          ))}
-        </div>
+              </Link>
+            ))}
+          </div>
+        ) : (
+          <div className="mt-12 py-16 text-center text-slate-500">
+            Gallery moments will be shared here soon.
+          </div>
+        )}
       </div>
     </section>
   );
@@ -1999,8 +2015,85 @@ function PresidentPage() {
 // 25. TEAM PAGE
 // ======================================================
 
+
+
 function TeamPage() {
   usePageAnimations();
+
+  const [teamMembers, setTeamMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [refresh, setRefresh] = useState(0);
+
+  useEffect(() => {
+    const fetchTeamMembers = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const response = await fetch(`${API_URL}/team`);
+
+        if (!response.ok) {
+          throw new Error("Unable to load team members.");
+        }
+
+        const data = await response.json();
+        setTeamMembers(data.members || []);
+      } catch (err) {
+        setError(err.message || "Something went wrong while loading the team.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTeamMembers();
+  }, [refresh]);
+
+  const leaders = teamMembers.filter(
+    (member) =>
+      member.position === "President" ||
+      member.position === "Vice President"
+  );
+
+  const members = teamMembers.filter(
+    (member) => member.position === "Member"
+  );
+
+  const TeamCard = ({ member }) => (
+    <motion.article
+      key={member._id}
+      initial={{ opacity: 0, y: 25 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="group overflow-hidden rounded-2xl border border-[#E5EDF3] bg-white shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+    >
+      <div className="h-[320px] overflow-hidden bg-[#EAF7FF]">
+        <img
+          src={member.image?.url || IMAGES.volunteers}
+          alt={member.name}
+          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+          loading="lazy"
+        />
+      </div>
+
+      <div className="p-6 text-center">
+        <h3 className="text-xl font-semibold text-[#18232D]">
+          {member.name}
+        </h3>
+
+        <p className="mt-2 text-sm font-semibold uppercase tracking-wider text-[#176B9A]">
+          {member.position}
+        </p>
+
+        {member.description && (
+          <p className="mt-3 text-sm leading-6 text-[#64748B]">
+            {member.description}
+          </p>
+        )}
+      </div>
+    </motion.article>
+  );
 
   return (
     <>
@@ -2013,64 +2106,87 @@ function TeamPage() {
 
       <section className="bg-white py-24">
         <div className="mx-auto max-w-[1440px] px-5 md:px-8 lg:px-12">
+
           <SectionHeading
             centered
-            eyebrow="Leadership & team"
-            title="People who make things happen."
-            description="Meet the team members who help coordinate and support our activities."
+            eyebrow="Leadership"
+            title="The people guiding our mission."
+            description="Meet the President and Vice President leading our society."
           />
 
-          <div className="mt-14 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
-            {teamMembers.map((member) => (
-              <motion.article
-                key={member.role}
-                whileHover={{ y: -7 }}
-                className="reveal group overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm transition hover:shadow-xl"
-              >
-                <div className="h-[320px] overflow-hidden bg-slate-100">
-                  <img
-                    src={member.image}
-                    alt={`${member.name} portrait placeholder`}
-                    className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
-                  />
-                </div>
-
-                <div className="p-6 text-center">
-                  <h3 className="text-lg font-extrabold text-slate-950">
-                    {member.name}
-                  </h3>
-
-                  <p className="mt-2 text-xs font-bold uppercase tracking-wider text-sky-700">
-                    {member.role}
-                  </p>
-                </div>
-              </motion.article>
-            ))}
-          </div>
-
-          <div className="mt-14 rounded-3xl bg-sky-50 p-9 text-center">
-            <Users className="mx-auto text-sky-700" size={36} />
-
-            <h3 className="mt-5 text-2xl font-extrabold text-slate-950">
-              Want to join our team?
-            </h3>
-
-            <p className="mx-auto mt-3 max-w-xl leading-7 text-slate-500">
-              We welcome people who are passionate about volunteering,
-              teamwork and community welfare.
-            </p>
-
-            <div className="mt-7">
-              <PrimaryButton to="/volunteer">
-                Become a Volunteer
-              </PrimaryButton>
+          {loading ? (
+            <div className="py-16 text-center text-[#64748B]">
+              Loading team members...
             </div>
+          ) : error ? (
+            <div className="py-16 text-center">
+              <p className="text-red-600">{error}</p>
+              <button
+                onClick={() => setRefresh((value) => value + 1)}
+                className="mt-4 rounded-full bg-[#176B9A] px-6 py-3 text-sm font-semibold text-white transition hover:bg-[#12577F]"
+              >
+                Try Again
+              </button>
+            </div>
+          ) : (
+            <>
+              {leaders.length > 0 ? (
+                <div className="mx-auto mt-14 grid max-w-3xl gap-8 sm:grid-cols-2">
+                  {leaders.map((member) => (
+                    <TeamCard key={member._id} member={member} />
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-10 text-center text-[#64748B]">
+                  Leadership profiles will be added soon.
+                </p>
+              )}
+
+              <div className="mt-24">
+                <SectionHeading
+                  centered
+                  eyebrow="Our Members"
+                  title="People who make things happen."
+                  description="Meet the members who contribute their time, energy and dedication to our welfare activities."
+                />
+
+                {members.length > 0 ? (
+                  <div className="mt-14 grid gap-7 sm:grid-cols-2 lg:grid-cols-4">
+                    {members.map((member) => (
+                      <TeamCard key={member._id} member={member} />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="mt-10 text-center text-[#64748B]">
+                    Our team members will be introduced here soon.
+                  </p>
+                )}
+              </div>
+            </>
+          )}
+
+          <div className="mt-24 rounded-3xl bg-[#EAF7FF] px-6 py-14 text-center md:px-12">
+            <h2 className="text-3xl font-semibold text-[#18232D]">
+              Want to join our team?
+            </h2>
+            <p className="mx-auto mt-4 max-w-2xl leading-7 text-[#64748B]">
+              Become part of a community that believes in helping others and
+              creating meaningful change.
+            </p>
+            <Link
+              to="/volunteer"
+              className="mt-8 inline-flex rounded-full bg-[#176B9A] px-8 py-4 font-semibold text-white transition hover:bg-[#12577F]"
+            >
+              Become a Volunteer
+            </Link>
           </div>
+
         </div>
       </section>
     </>
   );
 }
+
 
 
 function GalleryPage() {
