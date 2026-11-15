@@ -2391,35 +2391,37 @@ function GalleryPage() {
 // 27. NEWS PAGE
 // ======================================================
 
+
 function NewsPage() {
   usePageAnimations();
 
-  const news = [
-    {
-      slug: "students-and-community",
-      title: "The Power of Students Coming Together for Good",
-      category: "Community",
-      image: IMAGES.meeting,
-      description:
-        "How collective participation can encourage meaningful community engagement.",
-    },
-    {
-      slug: "importance-of-volunteering",
-      title: "Why Volunteering Matters in Our Communities",
-      category: "Awareness",
-      image: IMAGES.volunteers,
-      description:
-        "Exploring the value of giving time, skills and energy to support others.",
-    },
-    {
-      slug: "kindness-and-change",
-      title: "Small Acts of Kindness Can Create Lasting Change",
-      category: "Inspiration",
-      image: IMAGES.hands,
-      description:
-        "A reminder that positive change often begins with small actions.",
-    },
-  ];
+  const [news, setNews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchNews = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await fetch(`${API_URL}/news`);
+
+      if (!response.ok) {
+        throw new Error("Unable to load news articles.");
+      }
+
+      const data = await response.json();
+      setNews(data.news || []);
+    } catch (err) {
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNews();
+  }, []);
 
   return (
     <>
@@ -2439,42 +2441,80 @@ function NewsPage() {
             description="Articles and updates about service, volunteering and community welfare."
           />
 
-          <div className="mt-14 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
-            {news.map((article) => (
-              <Link
-                key={article.slug}
-                to={`/news/${article.slug}`}
-                className="reveal group overflow-hidden rounded-3xl border border-slate-100 transition hover:-translate-y-2 hover:shadow-xl"
+          {loading ? (
+            <div className="mt-16 text-center">
+              <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600" />
+              <p className="mt-4 text-sm text-slate-500">
+                Loading latest news...
+              </p>
+            </div>
+          ) : error ? (
+            <div className="mt-14 rounded-2xl bg-red-50 p-8 text-center">
+              <p className="font-semibold text-red-700">{error}</p>
+              <button
+                onClick={fetchNews}
+                className="mt-4 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-red-700"
               >
-                <div className="h-[250px] overflow-hidden">
-                  <img
-                    src={article.image}
-                    alt={article.title}
-                    className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-                  />
-                </div>
+                Try Again
+              </button>
+            </div>
+          ) : news.length === 0 ? (
+            <div className="mt-14 rounded-2xl bg-sky-50 px-6 py-16 text-center">
+              <Newspaper
+                size={38}
+                className="mx-auto text-sky-600"
+              />
+              <h3 className="mt-5 text-xl font-bold text-slate-900">
+                No news articles yet
+              </h3>
+              <p className="mt-2 text-sm text-slate-500">
+                Check back soon for the latest updates from ZABWelfare.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-14 grid gap-7 md:grid-cols-2 lg:grid-cols-3">
+              {news.map((article) => (
+                <Link
+                  key={article._id || article.slug}
+                  to={`/news/${article.slug}`}
+                  className="reveal group overflow-hidden rounded-3xl border border-slate-100 transition hover:-translate-y-2 hover:shadow-xl"
+                >
+                  <div className="relative h-[250px] overflow-hidden bg-slate-100">
+                    <img
+                      src={article.coverImage?.url || IMAGES.meeting}
+                      alt={article.title}
+                      className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                    />
 
-                <div className="p-7">
-                  <span className="text-xs font-extrabold uppercase tracking-wider text-sky-700">
-                    {article.category}
-                  </span>
-
-                  <h3 className="mt-4 text-xl font-extrabold leading-8 text-slate-950 group-hover:text-sky-700">
-                    {article.title}
-                  </h3>
-
-                  <p className="mt-3 text-sm leading-7 text-slate-500">
-                    {article.description}
-                  </p>
-
-                  <div className="mt-6 flex items-center gap-2 text-sm font-extrabold text-red-500">
-                    Read story
-                    <ArrowRight size={16} />
+                    {article.featured && (
+                      <span className="absolute left-4 top-4 rounded-full bg-red-500 px-3 py-1.5 text-xs font-bold text-white">
+                        Featured
+                      </span>
+                    )}
                   </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+
+                  <div className="p-7">
+                    <span className="text-xs font-extrabold uppercase tracking-wider text-sky-700">
+                      {article.category || "General"}
+                    </span>
+
+                    <h3 className="mt-4 text-xl font-extrabold leading-8 text-slate-950 transition group-hover:text-sky-700">
+                      {article.title}
+                    </h3>
+
+                    <p className="mt-3 line-clamp-3 text-sm leading-7 text-slate-500">
+                      {article.excerpt}
+                    </p>
+
+                    <div className="mt-6 flex items-center gap-2 text-sm font-extrabold text-red-500">
+                      Read story
+                      <ArrowRight size={16} />
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
     </>
@@ -2485,69 +2525,138 @@ function NewsPage() {
 // 28. NEWS DETAIL PAGE
 // ======================================================
 
+
 function NewsDetailPage() {
   const { slug } = useParams();
 
-  const articleMap = {
-    "students-and-community": {
-      title: "The Power of Students Coming Together for Good",
-      image: IMAGES.meeting,
-      category: "Community",
-    },
-    "importance-of-volunteering": {
-      title: "Why Volunteering Matters in Our Communities",
-      image: IMAGES.volunteers,
-      category: "Awareness",
-    },
-    "kindness-and-change": {
-      title: "Small Acts of Kindness Can Create Lasting Change",
-      image: IMAGES.hands,
-      category: "Inspiration",
-    },
-  };
-
-  const article = articleMap[slug];
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   usePageAnimations([slug]);
 
-  if (!article) {
-    return <NotFoundPage />;
+  useEffect(() => {
+    const fetchArticle = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        setArticle(null);
+
+        const response = await fetch(
+          `${API_URL}/news/${encodeURIComponent(slug)}`
+        );
+
+        if (response.status === 404) {
+          setError("Article not found.");
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error("Unable to load this article.");
+        }
+
+        const data = await response.json();
+        setArticle(data.article);
+      } catch (err) {
+        setError(err.message || "Something went wrong.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchArticle();
+  }, [slug]);
+
+  if (loading) {
+    return (
+      <section className="flex min-h-[60vh] items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-sky-100 border-t-sky-600" />
+          <p className="mt-4 text-sm text-slate-500">
+            Loading article...
+          </p>
+        </div>
+      </section>
+    );
   }
+
+  if (error || !article) {
+    return (
+      <section className="flex min-h-[60vh] items-center justify-center bg-white px-5">
+        <div className="max-w-md text-center">
+          <h2 className="text-2xl font-extrabold text-slate-950">
+            {error === "Article not found."
+              ? "Article not found"
+              : "Unable to load article"}
+          </h2>
+
+          <p className="mt-3 text-sm leading-7 text-slate-500">
+            {error || "This article may no longer be available."}
+          </p>
+
+          <div className="mt-6">
+            <PrimaryButton to="/news">
+              Back to News
+            </PrimaryButton>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  const articleImage = article.coverImage?.url || IMAGES.meeting;
 
   return (
     <>
       <PageHero
-        eyebrow={article.category}
+        eyebrow={article.category || "News & stories"}
         title={article.title}
-        image={article.image}
+        description={article.excerpt}
+        image={articleImage}
       />
 
       <section className="bg-white py-24">
         <article className="mx-auto max-w-3xl px-5">
           <img
-            src={article.image}
+            src={articleImage}
             alt={article.title}
-            className="h-[400px] w-full rounded-3xl object-cover"
+            className="h-[300px] w-full rounded-3xl object-cover sm:h-[400px]"
           />
 
-          <div className="mt-10">
-            <h2 className="text-2xl font-extrabold text-slate-950">
-              Why this matters
+          <div className="mt-8">
+            <div className="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+              <span className="font-bold uppercase tracking-wider text-sky-700">
+                {article.category || "General"}
+              </span>
+
+              {article.publishedAt && (
+                <>
+                  <span>•</span>
+                  <span>
+                    {new Date(article.publishedAt).toLocaleDateString(
+                      "en-PK",
+                      {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      }
+                    )}
+                  </span>
+                </>
+              )}
+            </div>
+
+            <h2 className="mt-6 text-2xl font-extrabold leading-tight text-slate-950 sm:text-3xl">
+              {article.title}
             </h2>
 
-            <p className="mt-5 leading-8 text-slate-500">
-              Communities become stronger when people choose to participate,
-              support one another and take responsibility for positive
-              change. Student-led initiatives can encourage awareness,
-              collaboration and a culture of service.
+            <p className="mt-5 text-lg leading-8 text-slate-600">
+              {article.excerpt}
             </p>
 
-            <p className="mt-5 leading-8 text-slate-500">
-              At ZABWelfare, we believe that every contribution has value.
-              By bringing people together around shared goals, we can
-              encourage meaningful participation and support communities
-              through collective action.
-            </p>
+            <div className="mt-8 whitespace-pre-line text-base leading-8 text-slate-500">
+              {article.content}
+            </div>
           </div>
 
           <div className="mt-12 rounded-3xl bg-sky-50 p-8">
@@ -2564,6 +2673,16 @@ function NewsDetailPage() {
                 Get Involved
               </PrimaryButton>
             </div>
+          </div>
+
+          <div className="mt-10">
+            <Link
+              to="/news"
+              className="inline-flex items-center gap-2 text-sm font-bold text-sky-700 transition hover:text-sky-900"
+            >
+              <ArrowRight className="rotate-180" size={17} />
+              Back to all news
+            </Link>
           </div>
         </article>
       </section>

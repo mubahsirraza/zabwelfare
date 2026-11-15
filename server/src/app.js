@@ -12,6 +12,7 @@ import notFoundMiddleware from "./middleware/notFoundMiddleware.js";
 import errorMiddleware from "./middleware/errorMiddleware.js";
 import galleryRoutes from "./routes/galleryRoutes.js";
 import teamRoutes from "./routes/teamRoutes.js";
+import newsRoutes from "./routes/newsRoutes.js";
 
 const app = express();
 
@@ -80,6 +81,8 @@ app.use("/api/drives", driveRoutes);
 app.use("/api/gallery", galleryRoutes);
 
 app.use("/api/team", teamRoutes);
+
+app.use("/api/news", newsRoutes);
 
 
 // Handle unknown routes
