@@ -260,14 +260,6 @@ const causes = [
   },
 ];
 
-const galleryImages = [
-  { image: IMAGES.community, title: "Community Togetherness" },
-  { image: IMAGES.education, title: "Education & Learning" },
-  { image: IMAGES.food, title: "Food Support" },
-  { image: IMAGES.volunteers, title: "Volunteer Activities" },
-  { image: IMAGES.children, title: "Supporting Children" },
-  { image: IMAGES.meeting, title: "Community Engagement" },
-];
 
 const teamMembers = [
   {
@@ -2080,14 +2072,64 @@ function TeamPage() {
   );
 }
 
-// ======================================================
-// 26. GALLERY PAGE
-// ======================================================
 
 function GalleryPage() {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [galleryImages, setGalleryImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
 
   usePageAnimations();
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchGallery = async () => {
+      try {
+        setLoading(true);
+        setError("");
+
+        const API_URL =
+          import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+        const response = await fetch(`${API_URL}/gallery`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Unable to load gallery images.");
+        }
+
+        const data = await response.json();
+
+        const images = (data.images || [])
+          .filter((item) => item.image?.url)
+          .map((item) => ({
+            id: item._id,
+            image: item.image.url,
+            title: item.title,
+            description: item.description || "",
+            category: item.category || "General",
+          }));
+
+        setGalleryImages(images);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Gallery fetch error:", err);
+          setError("Unable to load gallery images. Please try again.");
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchGallery();
+
+    return () => controller.abort();
+  }, [retry]);
 
   return (
     <>
@@ -2107,34 +2149,78 @@ function GalleryPage() {
             description="A visual collection of community moments and activities."
           />
 
-          <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {galleryImages.map((item) => (
+          {loading ? (
+            <div className="mt-14 flex min-h-[250px] items-center justify-center">
+              <div className="text-center">
+                <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-sky-100 border-t-[#176B9A]" />
+                <p className="mt-4 text-sm text-slate-500">
+                  Loading gallery images...
+                </p>
+              </div>
+            </div>
+          ) : error ? (
+            <div className="mt-14 rounded-3xl border border-red-100 bg-white p-10 text-center">
+              <p className="text-sm text-red-600">{error}</p>
+
               <button
                 type="button"
-                key={item.title}
-                onClick={() => setSelectedImage(item)}
-                className="reveal group relative h-[300px] overflow-hidden rounded-3xl text-left"
+                onClick={() => setRetry((value) => value + 1)}
+                className="mt-5 rounded-xl bg-[#176B9A] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#12577E]"
               >
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
-                />
-
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
-
-                <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between">
-                  <span className="font-extrabold text-white">
-                    {item.title}
-                  </span>
-
-                  <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-900">
-                    <Eye size={18} />
-                  </span>
-                </div>
+                Try Again
               </button>
-            ))}
-          </div>
+            </div>
+          ) : galleryImages.length === 0 ? (
+            <div className="mt-14 rounded-3xl border border-slate-200 bg-white px-6 py-16 text-center">
+              <Camera size={38} className="mx-auto text-slate-300" />
+
+              <h3 className="mt-4 text-lg font-bold text-slate-800">
+                No gallery images yet
+              </h3>
+
+              <p className="mt-2 text-sm text-slate-500">
+                Our community moments will appear here soon.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {galleryImages.map((item) => (
+                <button
+                  type="button"
+                  key={item.id}
+                  onClick={() => setSelectedImage(item)}
+                  className="reveal group relative h-[300px] overflow-hidden rounded-3xl text-left"
+                >
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    loading="lazy"
+                    className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+                  />
+
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent" />
+
+                  <div className="absolute bottom-5 left-5 right-5 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <span className="block truncate font-extrabold text-white">
+                        {item.title}
+                      </span>
+
+                      {item.category && (
+                        <span className="mt-1 block text-xs text-white/75">
+                          {item.category}
+                        </span>
+                      )}
+                    </div>
+
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-900">
+                      <Eye size={18} />
+                    </span>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -2156,14 +2242,28 @@ function GalleryPage() {
               <X size={22} />
             </button>
 
-            <motion.img
-              initial={{ scale: 0.9 }}
-              animate={{ scale: 1 }}
-              src={selectedImage.image}
-              alt={selectedImage.title}
-              className="max-h-[85vh] max-w-full rounded-2xl object-contain"
+            <div
+              className="max-w-full text-center"
               onClick={(event) => event.stopPropagation()}
-            />
+            >
+              <motion.img
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                src={selectedImage.image}
+                alt={selectedImage.title}
+                className="max-h-[78vh] max-w-full rounded-2xl object-contain"
+              />
+
+              <h3 className="mt-4 text-lg font-bold text-white">
+                {selectedImage.title}
+              </h3>
+
+              {selectedImage.description && (
+                <p className="mt-2 text-sm text-white/75">
+                  {selectedImage.description}
+                </p>
+              )}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
