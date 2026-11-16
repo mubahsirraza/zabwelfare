@@ -516,7 +516,7 @@ function Navbar() {
       <div className="mx-auto flex h-[82px] max-w-[1440px] items-center justify-between px-5 md:px-8 xl:px-12">
         <Link to="/" className="flex shrink-0 items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-2xl font-black text-sky-700">
-            Z
+            <img src="/images/logo.png" alt="Z" />
           </div>
 
           <div>
@@ -525,7 +525,7 @@ function Navbar() {
             </div>
 
             <div className="mt-0.5 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-500">
-              Together for humanity
+              Live Healthy
             </div>
           </div>
         </Link>
@@ -1199,7 +1199,7 @@ function PresidentMessage() {
           <div className="absolute -left-5 -top-5 h-full w-full rounded-[30px] border-2 border-sky-200" />
 
           <img
-            src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1000&q=85"
+            src="/images/president.jpg"
             alt="President portrait placeholder"
             className="relative h-[480px] w-full rounded-[30px] object-cover object-center"
           />
@@ -1243,7 +1243,7 @@ function PresidentMessage() {
               President, ZABWelfare
             </p>
             <p className="mt-1 text-sm text-slate-500">
-              SZABIST
+              Mubashir Raza Gabol
             </p>
           </div>
 
@@ -1510,12 +1510,12 @@ function DonationBanner() {
               Make a Contribution
             </PrimaryButton>
 
-            <SecondaryButton
-              to="/contact"
-              className="border-white/30 bg-transparent text-white hover:bg-white hover:text-slate-950"
-            >
-              Talk to Our Team
-            </SecondaryButton>
+           <SecondaryButton
+  to="/contact"
+  className="border-white/30 bg-white text-slate-950 hover:bg-slate-100 hover:text-sky-700"
+>
+  Talk to Our Team
+</SecondaryButton>
           </div>
         </div>
       </div>
@@ -1966,7 +1966,7 @@ function PresidentPage() {
         <div className="mx-auto grid max-w-[1200px] items-center gap-14 px-5 md:px-8 lg:grid-cols-[0.8fr_1.2fr]">
           <div className="reveal-left">
             <img
-              src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1000&q=85"
+              src="/images/president.jpg"
               alt="President portrait placeholder"
               className="h-[500px] w-full rounded-[30px] object-cover"
             />
@@ -3092,14 +3092,59 @@ function DonatePage() {
 // 30. VOLUNTEER PAGE
 // ======================================================
 
+
 function VolunteerPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   usePageAnimations();
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitted(true);
+
+    setSubmitting(true);
+    setError("");
+
+    const form = event.currentTarget;
+
+    const formData = new FormData(form);
+
+    const applicationData = {
+      fullName: formData.get("fullName").trim(),
+      email: formData.get("email").trim(),
+      phone: formData.get("phone").trim(),
+      areaOfInterest: formData.get("areaOfInterest"),
+      motivation: formData.get("motivation").trim(),
+    };
+
+    try {
+      const response = await fetch(`${API_URL}/volunteers`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(applicationData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message || "Unable to submit your application."
+        );
+      }
+
+      setSubmitted(true);
+      form.reset();
+    } catch (err) {
+      setError(
+        err.message ||
+          "Something went wrong. Please try again."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -3170,20 +3215,24 @@ function VolunteerPage() {
                 />
 
                 <h2 className="mt-6 text-2xl font-extrabold text-slate-950">
-                  Form preview completed
+                  Application submitted!
                 </h2>
 
                 <p className="mt-3 text-sm leading-7 text-slate-500">
-                  This form is currently a frontend demonstration. It has not
-                  submitted or stored an application.
+                  Thank you for your interest in joining ZABWelfare.
+                  Your volunteer application has been received and is
+                  currently pending review by our administration team.
                 </p>
 
                 <button
                   type="button"
-                  onClick={() => setSubmitted(false)}
+                  onClick={() => {
+                    setSubmitted(false);
+                    setError("");
+                  }}
                   className="mt-7 font-bold text-sky-700"
                 >
-                  Return to form
+                  Submit another application
                 </button>
               </div>
             ) : (
@@ -3196,6 +3245,15 @@ function VolunteerPage() {
                   Share your details to express your interest.
                 </p>
 
+                {error && (
+                  <div
+                    role="alert"
+                    className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+                  >
+                    {error}
+                  </div>
+                )}
+
                 <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
@@ -3204,7 +3262,9 @@ function VolunteerPage() {
 
                     <input
                       required
+                      name="fullName"
                       type="text"
+                      maxLength={120}
                       placeholder="Your full name"
                       className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     />
@@ -3218,7 +3278,9 @@ function VolunteerPage() {
 
                       <input
                         required
+                        name="email"
                         type="email"
+                        maxLength={150}
                         placeholder="you@example.com"
                         className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                       />
@@ -3231,7 +3293,9 @@ function VolunteerPage() {
 
                       <input
                         required
+                        name="phone"
                         type="tel"
+                        maxLength={30}
                         placeholder="+92"
                         className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                       />
@@ -3245,18 +3309,25 @@ function VolunteerPage() {
 
                     <select
                       required
+                      name="areaOfInterest"
                       defaultValue=""
                       className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 outline-none focus:border-sky-500"
                     >
                       <option value="" disabled>
                         Select an area
                       </option>
-                      <option>Education</option>
-                      <option>Community Welfare</option>
-                      <option>Food Support</option>
-                      <option>Event Management</option>
-                      <option>Media and Communications</option>
-                      <option>Other</option>
+                      <option value="Education">Education</option>
+                      <option value="Community Welfare">
+                        Community Welfare
+                      </option>
+                      <option value="Food Support">Food Support</option>
+                      <option value="Event Management">
+                        Event Management
+                      </option>
+                      <option value="Media and Communications">
+                        Media and Communications
+                      </option>
+                      <option value="Other">Other</option>
                     </select>
                   </div>
 
@@ -3266,7 +3337,9 @@ function VolunteerPage() {
                     </label>
 
                     <textarea
+                      name="motivation"
                       rows="4"
+                      maxLength={2000}
                       placeholder="Tell us a little about yourself..."
                       className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-sky-500"
                     />
@@ -3274,11 +3347,19 @@ function VolunteerPage() {
 
                   <button
                     type="submit"
-                    className="flex w-full items-center justify-center gap-3 rounded-full bg-red-500 px-7 py-4 font-extrabold text-white transition hover:bg-red-600"
+                    disabled={submitting}
+                    className="flex w-full items-center justify-center gap-3 rounded-full bg-red-500 px-7 py-4 font-extrabold text-white transition hover:bg-red-600 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Submit Interest
-                    <ArrowRight size={18} />
+                    {submitting
+                      ? "Submitting Application..."
+                      : "Submit Interest"}
+
+                    {!submitting && <ArrowRight size={18} />}
                   </button>
+
+                  <p className="text-center text-xs text-slate-400">
+                    Your application will be reviewed by the ZABWelfare team.
+                  </p>
                 </form>
               </>
             )}
@@ -3293,14 +3374,56 @@ function VolunteerPage() {
 // 31. CONTACT PAGE
 // ======================================================
 
+
 function ContactPage() {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
 
   usePageAnimations();
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
-    setSubmitted(true);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const payload = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      subject: formData.get("subject"),
+      message: formData.get("message"),
+    };
+
+    setSubmitting(true);
+    setError("");
+
+    try {
+      const response = await fetch(`${API_URL}/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || result.success === false) {
+        throw new Error(
+          result.message || "Unable to send your message. Please try again."
+        );
+      }
+
+      form.reset();
+      setSubmitted(true);
+    } catch (err) {
+      setError(
+        err.message || "Something went wrong. Please try again later."
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -3326,12 +3449,10 @@ function ContactPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
                   <MapPin size={22} />
                 </div>
-
                 <div>
                   <p className="font-extrabold text-slate-950">
                     Our affiliation
                   </p>
-
                   <p className="mt-1 text-sm text-slate-500">
                     SZABIST, Pakistan
                   </p>
@@ -3342,12 +3463,10 @@ function ContactPage() {
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-sky-50 text-sky-700">
                   <Camera size={22} />
                 </div>
-
                 <div>
                   <p className="font-extrabold text-slate-950">
                     Instagram
                   </p>
-
                   <a
                     href={INSTAGRAM_URL}
                     target="_blank"
@@ -3368,33 +3487,55 @@ function ContactPage() {
                   size={55}
                   className="mx-auto text-emerald-500"
                 />
-
                 <h2 className="mt-6 text-2xl font-extrabold text-slate-950">
-                  Message preview completed
+                  Message sent successfully!
                 </h2>
-
                 <p className="mt-3 text-sm leading-7 text-slate-500">
-                  This form is currently a frontend demonstration. Your
-                  message has not been sent or stored.
+                  Thank you for contacting ZABWelfare. Your message has been
+                  received. Our team will get back to you as soon as possible.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmitted(false);
+                    setError("");
+                  }}
+                  className="mt-7 rounded-full bg-sky-600 px-7 py-3 font-bold text-white transition hover:bg-sky-700"
+                >
+                  Send another message
+                </button>
               </div>
             ) : (
               <>
                 <h2 className="text-2xl font-extrabold text-slate-950">
                   Send us a message
                 </h2>
+                <p className="mt-2 text-sm text-slate-500">
+                  Fill in the form below and our team will be in touch.
+                </p>
+
+                {error && (
+                  <div
+                    role="alert"
+                    className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+                  >
+                    {error}
+                  </div>
+                )}
 
                 <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                   <div>
                     <label className="mb-2 block text-sm font-bold text-slate-700">
                       Your name
                     </label>
-
                     <input
                       required
+                      name="name"
                       type="text"
+                      autoComplete="name"
+                      maxLength={100}
                       placeholder="Full name"
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-sky-500"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     />
                   </div>
 
@@ -3402,12 +3543,14 @@ function ContactPage() {
                     <label className="mb-2 block text-sm font-bold text-slate-700">
                       Email
                     </label>
-
                     <input
                       required
+                      name="email"
                       type="email"
+                      autoComplete="email"
+                      maxLength={150}
                       placeholder="Email address"
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-sky-500"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     />
                   </div>
 
@@ -3415,12 +3558,13 @@ function ContactPage() {
                     <label className="mb-2 block text-sm font-bold text-slate-700">
                       Subject
                     </label>
-
                     <input
                       required
+                      name="subject"
                       type="text"
+                      maxLength={150}
                       placeholder="How can we help?"
-                      className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-sky-500"
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     />
                   </div>
 
@@ -3428,21 +3572,23 @@ function ContactPage() {
                     <label className="mb-2 block text-sm font-bold text-slate-700">
                       Message
                     </label>
-
                     <textarea
                       required
+                      name="message"
                       rows="5"
+                      maxLength={5000}
                       placeholder="Write your message..."
-                      className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-sky-500"
+                      className="w-full resize-none rounded-xl border border-slate-200 px-4 py-3 outline-none transition focus:border-sky-500 focus:ring-4 focus:ring-sky-100"
                     />
                   </div>
 
                   <button
                     type="submit"
-                    className="flex w-full items-center justify-center gap-3 rounded-full bg-sky-600 px-7 py-4 font-extrabold text-white transition hover:bg-sky-700"
+                    disabled={submitting}
+                    className="flex w-full items-center justify-center gap-3 rounded-full bg-sky-600 px-7 py-4 font-extrabold text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    Send Message
-                    <Send size={18} />
+                    {submitting ? "Sending message..." : "Send Message"}
+                    {!submitting && <Send size={18} />}
                   </button>
                 </form>
               </>
@@ -3453,6 +3599,7 @@ function ContactPage() {
     </>
   );
 }
+
 
 // ======================================================
 // 32. POLICY PAGES
@@ -3667,7 +3814,7 @@ function Footer() {
               </div>
 
               <div className="mt-1 text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400">
-                Together for humanity
+                Live Healthy
               </div>
             </div>
           </Link>
